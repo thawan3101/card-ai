@@ -3,9 +3,10 @@ from collections import Counter
 from PIL import Image
 import random
 
-st.set_page_config(page_title="เค้าไพ่จากภาพ", layout="centered")
-st.title("🃏 วิเคราะห์เค้าไพ่จากภาพ")
+st.set_page_config(page_title="เค้าไพ่จากภาพ (อัตโนมัติ)", layout="centered")
+st.title("🃏 วิเคราะห์เค้าไพ่จากภาพ (ตาต่อตา)")
 
+# ---------- ฟังก์ชันย่อรูป ----------
 def resize_image(img, max_width=720):
     w, h = img.size
     if w > max_width:
@@ -13,7 +14,10 @@ def resize_image(img, max_width=720):
         img = img.resize((max_width, int(h * ratio)))
     return img
 
+# ---------- ฟังก์ชันทำนาย ----------
 def predict_next(results, game, n=10):
+    preds = []
+
     if game == "บาคาร่า":
         choices = ["P", "B", "T"]
     elif game == "แดงดำ":
@@ -26,70 +30,11 @@ def predict_next(results, game, n=10):
 
     cnt = Counter(results)
     total = len(results)
+
     probs = {k: cnt.get(k, 0)/total for k in choices}
 
     last = results[-1]
     run = 1
-    for i in range(total - 1, 0, -1):
-        if results[i] == results[i - 1]:
-            run += 1
-        else:
-            break
-
-    if run >= 3:
-        probs[last] = probs.get(last, 0) + 0.15
-
-    s = sum(probs.values())
-    weights = [probs.get(c, 0)/s for c in choices]
-
-    return random.choices(choices, weights, k=n)
-
-if "results" not in st.session_state:
-    st.session_state["results"] = []
-
-game = st.selectbox("เลือกเกม", ["บาคาร่า", "แดงดำ", "เสือมังกร"])
-
-uploaded = st.file_uploader("อัปโหลดภาพ (แคปหน้าจอได้)", type=["png", "jpg", "jpeg"])
-if uploaded:
-    img = Image.open(uploaded)
-    img = resize_image(img)
-    st.image(img, width=350)
-
-st.subheader("เพิ่มผลตา")
-
-if game == "บาคาร่า":
-    col1, col2, col3 = st.columns(3)
-    if col1.button("ผู้เล่น"):
-        st.session_state["results"].append("P")
-    if col2.button("เจ้ามือ"):
-        st.session_state["results"].append("B")
-    if col3.button("เสมอ"):
-        st.session_state["results"].append("T")
-
-elif game == "แดงดำ":
-    col1, col2 = st.columns(2)
-    if col1.button("แดง"):
-        st.session_state["results"].append("R")
-    if col2.button("ดำ"):
-        st.session_state["results"].append("B")
-
-else:
-    col1, col2 = st.columns(2)
-    if col1.button("เสือ"):
-        st.session_state["results"].append("T")
-    if col2.button("มังกร"):
-        st.session_state["results"].append("D")
-
-if st.session_state["results"]:
-    st.divider()
-    st.write("ผลที่ผ่านมา:", st.session_state["results"])
-
-    preds = predict_next(st.session_state["results"], game)
-    st.subheader("🔮 คาดการณ์ 10 ตาถัดไป")
-    st.write(" → ".join(preds))
-
-if st.button("รีเซ็ต"):
-    st.session_state["results"] = []    run = 1
     for i in range(total-1, 0, -1):
         if results[i] == results[i-1]:
             run += 1
@@ -180,42 +125,4 @@ if total > 0:
 
 # ---------- รีเซ็ต ----------
 if st.button("🔄 รีเซ็ตทั้งหมด"):
-    st.session_state.results = []    st.write("🔥 เค้าปัจจุบันติด:", run, "ตา")
-
-if st.button("🔄 รีเซ็ต"):
     st.session_state.results = []
-import random
-
-def predict_next(results, game, n=10):
-    preds = []
-
-    if game == "บาคาร่า":
-        choices = ["P", "B", "T"]
-
-        # สถิติย้อนหลัง
-        cnt = Counter(results)
-        total = len(results)
-        probs = {
-            "P": cnt.get("P", 0) / total if total else 0.5,
-            "B": cnt.get("B", 0) / total if total else 0.45,
-            "T": 0.03
-        }
-
-        # เช็คเค้าติด
-        run = 1
-        for i in range(len(results)-1, 0, -1):
-            if results[i] == results[i-1]:
-                run += 1
-            else:
-                break
-
-        last = results[-1]
-        if run >= 3:
-            probs[last] += 0.15  # เอนเอียงตามเค้า
-
-        total_p = sum(probs.values())
-        weights = [probs[c]/total_p for c in choices]
-
-        preds = random.choices(choices, weights=weights, k=n)
-
-    return preds
