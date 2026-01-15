@@ -58,3 +58,38 @@ if total > 0:
 
 if st.button("🔄 รีเซ็ต"):
     st.session_state.results = []
+import random
+
+def predict_next(results, game, n=10):
+    preds = []
+
+    if game == "บาคาร่า":
+        choices = ["P", "B", "T"]
+
+        # สถิติย้อนหลัง
+        cnt = Counter(results)
+        total = len(results)
+        probs = {
+            "P": cnt.get("P", 0) / total if total else 0.5,
+            "B": cnt.get("B", 0) / total if total else 0.45,
+            "T": 0.03
+        }
+
+        # เช็คเค้าติด
+        run = 1
+        for i in range(len(results)-1, 0, -1):
+            if results[i] == results[i-1]:
+                run += 1
+            else:
+                break
+
+        last = results[-1]
+        if run >= 3:
+            probs[last] += 0.15  # เอนเอียงตามเค้า
+
+        total_p = sum(probs.values())
+        weights = [probs[c]/total_p for c in choices]
+
+        preds = random.choices(choices, weights=weights, k=n)
+
+    return preds
