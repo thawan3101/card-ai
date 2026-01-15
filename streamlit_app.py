@@ -43,7 +43,12 @@ total = len(results)
 if total > 0:
     st.divider()
     st.subheader(f"📊 ตาที่ {total}")
+if total >= 5:
+    st.divider()
+    st.subheader("🔮 คาดการณ์ล่วงหน้า 10 ตา")
 
+    future = ทำนายถัดไป(results, game, n=10)
+    st.write(" → ".join(future))
     cnt = Counter(results)
     for k, v in cnt.items():
         st.write(k, "=", v, f"({v/total*100:.1f}%)")
